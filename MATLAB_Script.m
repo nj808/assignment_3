@@ -40,3 +40,62 @@ combined_dataset = standardizeMissing(combined_dataset, -9);
 cv          = cvpartition(combined_dataset.diagnosis,'HoldOut',0.3);
 training_set =  combined_dataset(cv.training,:);
 test_set  =  combined_dataset(cv.test,:);
+
+%% Build The Random Forest Classifier
+%Choose the number of trees 
+numTrees = 55;
+
+%Train a random forest classifier using the training set and diagnosis
+%column as the target attribute with TreeBagger function. The additional  
+random_forest = TreeBagger(numTrees, training_set, "diagnosis", "Method", "classification", 'OOBPrediction', 'on', 'OOBPredictorImportance','on', 'PredictorSelection','curvature', "NumPredictorsToSample",5);
+figure;
+bar(categorical(random_forest.PredictorNames), random_forest.OOBPermutedPredictorDeltaError);
+title('Predictor Importance Estimates using Random Forest');
+ylabel('Estimates');
+xlabel('Predictors');
+%Plot the no. of out-of-bag samples have been classified incorrectly vs the no. of
+%trees grown in the random forest
+errorOOB = oobError(random_forest);
+plot(errorOOB);
+title("Out of Bag Error for Random Forest Classifier");
+xlabel 'Number of grown trees';
+ylabel 'Out-of-bag classification error';
+
+%% Predict and Evaluate the Classifier
+%Extract the first 19 indepenedent variables in the test set which will be
+%used as the predictors.
+test_set_features = test_set(:,1:19);
+
+%predict the diagnosis of each sample in the test_set using the
+%trained random classifier
+[prediction,scorer] = random_forest.predict(test_set_features);
+prediction = categorical(prediction);
+
+%Compute the Accuracy by comparing the diagnosis values predicted by the model to the actual
+%diagnosis values
+accuracy = sum(test_set.diagnosis == prediction) / numel(test_set.diagnosis);
+
+%Create a confusion matrix using confusionchart()
+confusionchart(test_set.diagnosis, prediction);
+title('Confusion Chart using Random Forest Classifier');
+
+%calculate f1-score, precision and recall from the values in the 2x2 confusion
+%matrix (TN, TP, FP, FN)
+confusion_values = confusionmat(test_set.diagnosis, prediction);
+precision = confusion_values(1,1)./(confusion_values(1,1) + confusion_values(1,2));
+recall = confusion_values(1,1)./(confusion_values(1,1) + confusion_values(2,1));
+f1_score = 2.*confusion_values(1,1)./(2.*confusion_values(1,1) + confusion_values(2,1) + confusion_values(1,2));
+
+%Plot a ROC performance curve and compute the area under the curve for the
+%'0'  and '1' categories in the diagnosis class 
+[X0,Y0,~,AUC0] = perfcurve(test_set.diagnosis, scorer(:,1), '0');
+[X1,Y1,~,AUC1] = perfcurve(test_set.diagnosis, scorer(:,2), '1');
+plot(X0,Y0);
+hold on;
+plot(X1,Y1);
+legend((sprintf("Area under curve for '0' class is: %.2f", AUC0)), ...
+(sprintf("Area under curve for '1' class is: %.2f", AUC1)), "Location","southeast");
+title('ROC for Classification using Random Forest');
+xlabel('False Positive rate');
+ylabel('True Positive rate');
+hold off;
