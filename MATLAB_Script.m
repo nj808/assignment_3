@@ -115,3 +115,46 @@ title('ROC for Classification using Random Forest');
 xlabel('False Positive rate');
 ylabel('True Positive rate');
 hold off;
+
+%% Build The Decision Tree Classifier
+%Train a k nearest neighbour classifier using the training set and diagnosis
+%column as the target attribute with fitcknn function. The additional  
+decision_tree = fitctree(training_set, "diagnosis","MaxNumSplits", 100, "SplitCriterion", "gdi", "Surrogate","off" );
+%% Predict and Evaluate the Classifier
+%Extract the first 19 indepenedent variables in the test set which will be
+%used as the predictors.
+test_set_features = test_set(:,1:19);
+
+%predict the diagnosis of each sample in the test_set using the
+%trained random classifier
+[prediction,scorer] = decision_tree.predict(test_set_features);
+prediction = categorical(prediction);
+
+%Compute the Accuracy by comparing the diagnosis values predicted by the model to the actual
+%diagnosis values
+accuracy = sum(test_set.diagnosis == prediction) / numel(test_set.diagnosis);
+
+%Create a confusion matrix using confusionchart()
+confusionchart(test_set.diagnosis, prediction);
+title('Confusion Chart using Decision Tree Classifier');
+
+%calculate f1-score, precision and recall from the values in the 2x2 confusion
+%matrix (TN, TP, FP, FN)
+confusion_values = confusionmat(test_set.diagnosis, prediction);
+precision = confusion_values(1,1)./(confusion_values(1,1) + confusion_values(1,2));
+recall = confusion_values(1,1)./(confusion_values(1,1) + confusion_values(2,1));
+f1_score = 2.*confusion_values(1,1)./(2.*confusion_values(1,1) + confusion_values(2,1) + confusion_values(1,2));
+
+%Plot a ROC performance curve and compute the area under the curve for the
+%'0'  and '1' categories in the diagnosis class 
+[X0,Y0,~,AUC0] = perfcurve(test_set.diagnosis, scorer(:,1), '0');
+[X1,Y1,~,AUC1] = perfcurve(test_set.diagnosis, scorer(:,2), '1');
+plot(X0,Y0);
+hold on;
+plot(X1,Y1);
+legend((sprintf("Area under curve for '0' class is: %.2f", AUC0)), ...
+(sprintf("Area under curve for '1' class is: %.2f", AUC1)), "Location","southeast");
+title('ROC for Classification using Decision Tree Classifier');
+xlabel('False Positive rate');
+ylabel('True Positive rate');
+hold off;
