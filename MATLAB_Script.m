@@ -41,13 +41,29 @@ cv          = cvpartition(combined_dataset.diagnosis,'HoldOut',0.3);
 training_set =  combined_dataset(cv.training,:);
 test_set  =  combined_dataset(cv.test,:);
 
+%%Frequency Histogram to show distrubtion of data samples for
+%%the binary diagnosis attribute in the test and training sets
+h = histogram(training_set.diagnosis);
+h.FaceColor = 'cyan';
+histcounts_training = histcounts(training_set.diagnosis);
+title("Frequency Histogram of Diagnosis Attribute for Training Set");
+xlabel("Binary Class");
+ylabel("Frequency");
+
+h = histogram(test_set.diagnosis);
+h.FaceColor = 	'#7E2F8E';
+histcounts_test = histcounts(test_set.diagnosis);
+title("Frequency Histogram of Diagnosis Attribute for Test Set");
+xlabel("Binary Class");
+ylabel("Frequency");
+
 %% Build The Random Forest Classifier
 %Choose the number of trees 
 numTrees = 55;
 
 %Train a random forest classifier using the training set and diagnosis
 %column as the target attribute with TreeBagger function. The additional  
-random_forest = TreeBagger(numTrees, training_set, "diagnosis", "Method", "classification", 'OOBPrediction', 'on', 'OOBPredictorImportance','on', 'PredictorSelection','curvature', "NumPredictorsToSample",5);
+random_forest = TreeBagger(numTrees, training_set, "diagnosis", "Method", "classification", 'OOBPrediction', 'on', 'OOBPredictorImportance','on', "NumPredictorsToSample",5);
 figure;
 bar(categorical(random_forest.PredictorNames), random_forest.OOBPermutedPredictorDeltaError);
 title('Predictor Importance Estimates using Random Forest');
