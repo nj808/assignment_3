@@ -47,14 +47,14 @@ h_train = histogram(training_set.diagnosis);
 h_train.FaceColor = 'cyan';
 histcounts_training = histcounts(training_set.diagnosis);
 title("Frequency Histogram of Diagnosis Attribute for Training Set");
-xlabel("Binary Class");
+xlabel("Heart Disease Diagnosis");
 ylabel("Frequency");
 
 h_test = histogram(test_set.diagnosis);
 h_test.FaceColor = '#7E2F8E';
 histcounts_test = histcounts(test_set.diagnosis);
 title("Frequency Histogram of Diagnosis Attribute for Test Set");
-xlabel("Binary Class");
+xlabel("Heart Disease Diagnosis");
 ylabel("Frequency");
 
 %Choose the number of trees and the numbers of predictors for each tree.
